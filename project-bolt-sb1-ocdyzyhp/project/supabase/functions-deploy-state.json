@@ -1,0 +1,9 @@
+{
+  "projectId": "72553667",
+  "functions": {
+    "admin-create-user": {
+      "hasChanged": false,
+      "hash": "d03f4d5d0a2fa0962d81607f22c502d36e227cf8d46e61b2d1429417563874b0"
+    }
+  }
+}
