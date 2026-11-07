@@ -7,4 +7,13 @@ dist
 
 supabase/.temp
 
+# Capacitor Android build outputs and machine-local configuration
+android/.gradle
+android/build
+android/app/build
+android/capacitor-cordova-android-plugins/build
+android/local.properties
+android/.idea
+android/*.iml
+
 supabase/.temp
