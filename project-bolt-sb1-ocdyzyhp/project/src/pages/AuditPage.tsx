@@ -34,6 +34,16 @@ const ACTION_LABELS: Record<string, MessageKey> = {
   vendor_deactivated: 'action_vendor_deactivated',
   vendor_reactivated: 'action_vendor_reactivated',
   stock_movement_recorded: 'action_stock_movement_recorded',
+  order_created: 'action_order_created',
+  order_draft_updated: 'action_order_draft_updated',
+  order_confirmed: 'action_order_confirmed',
+  order_cancelled: 'action_order_cancelled',
+  payment_recorded: 'action_payment_recorded',
+  payment_voided: 'action_payment_voided',
+  customer_created: 'action_customer_created',
+  customer_updated: 'action_customer_updated',
+  customer_deactivated: 'action_customer_deactivated',
+  customer_reactivated: 'action_customer_reactivated',
 };
 
 const ENTITY_LABELS: Record<string, MessageKey> = {
@@ -42,6 +52,9 @@ const ENTITY_LABELS: Record<string, MessageKey> = {
   raw_material: 'audit_entity_raw_material',
   vendor: 'audit_entity_vendor',
   stock_movement: 'audit_entity_stock_movement',
+  order: 'audit_entity_order',
+  payment: 'audit_entity_payment',
+  customer: 'audit_entity_customer',
 };
 
 function isRole(value: unknown): value is Role {

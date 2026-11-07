@@ -1,4 +1,4 @@
-import { Languages, Leaf, LogOut } from 'lucide-react';
+import { Languages, LogOut } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface AppHeaderProps {
@@ -11,8 +11,8 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b-4 border-amber-500 bg-leaf-800 text-white shadow-md">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-amber-950 shadow-inner sm:h-14 sm:w-14">
-          <Leaf className="h-7 w-7 sm:h-8 sm:w-8" aria-hidden />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-inner sm:h-14 sm:w-14">
+          <img src="/logo.png" alt={t('app_name')} className="h-full w-full object-contain p-1" />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-base font-bold leading-tight sm:text-xl">{t('app_name')}</h1>

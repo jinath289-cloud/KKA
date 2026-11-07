@@ -16,12 +16,12 @@ export function BottomNav({ items, active, onNavigate }: NavProps) {
       aria-label={t('nav_home')}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.08)] lg:hidden"
     >
-      <ul className="mx-auto flex max-w-lg">
+      <ul className="mx-auto flex w-max min-w-full">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = item.key === active;
           return (
-            <li key={item.key} className="flex-1">
+            <li key={item.key} className="w-20 shrink-0">
               <button
                 type="button"
                 onClick={() => onNavigate(item.key)}
