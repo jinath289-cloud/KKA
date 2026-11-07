@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { ProductRow, RawRow, Role } from '@/types';
 
 const PRICED_PRODUCT_COLUMNS =
-  'id, sku, name, category, description, pack_size, pack_unit, stock_kg, low_stock_limit_kg, retail_price, wholesale_price, is_active';
+  'id, sku, name, image_path, category, description, pack_size, pack_unit, stock_kg, low_stock_limit_kg, retail_price, wholesale_price, is_active';
 const RAW_COST_COLUMNS = 'id, code, name, stock_kg, low_stock_limit_kg, cost_per_kg, is_active';
 
 export interface ProductInput {

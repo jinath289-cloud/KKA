@@ -15,6 +15,7 @@ export interface ProductRow {
   id: string;
   sku: string;
   name: string;
+  image_path: string | null;
   category: string;
   pack_size: number;
   pack_unit: 'g' | 'kg';
@@ -183,6 +184,7 @@ export interface OrderProductOption {
   id: string;
   sku: string;
   name: string;
+  image_path: string | null;
   pack_size: number;
   pack_unit: 'g' | 'kg';
   retail_price: number;

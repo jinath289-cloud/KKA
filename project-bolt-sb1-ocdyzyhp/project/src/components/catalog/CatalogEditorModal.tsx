@@ -1,11 +1,14 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { ImagePlus, Image as ImageIcon } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TextField } from '@/components/ui/Field';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/useToast';
 import type { MessageKey } from '@/lib/i18n';
+import { compressImage, ImageValidationError } from '@/lib/images';
 import { recordStockMovement } from '@/services/stockService';
+import { getProductImageUrl, ProductImageError, removeProductImage, uploadProductImage } from '@/services/imageService';
 import {
   createProduct,
   createRawMaterial,
@@ -245,10 +248,16 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<MessageKey | null>(null);
   const [saving, setSaving] = useState(false);
+  const [createdProductId, setCreatedProductId] = useState<string | null>(null);
+  const [imagePath, setImagePath] = useState(props.kind === 'product' ? props.record?.image_path ?? null : null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [rawNames, setRawNames] = useState<string[]>([]);
   const [rawNamesFailed, setRawNamesFailed] = useState(false);
 
-  const editing = props.record !== undefined;
+  const editing = props.record !== undefined || createdProductId !== null;
   const category = values.category === NEW_CATEGORY ? newCategory : values.category;
   const supplyOptions = [...new Set([
     ...rawNames,
@@ -275,6 +284,58 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setFormError(null);
+  };
+
+  useEffect(() => () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+  }, [imagePreview]);
+
+  const imageErrorMessage = (error: unknown): MessageKey => {
+    if (error instanceof ImageValidationError || error instanceof ProductImageError) return error.key;
+    return 'catalog_image_error_network';
+  };
+
+  const chooseImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setImageBusy(true);
+    try {
+      const compressed = await compressImage(file);
+      setSelectedImage(compressed);
+      setImagePreview(URL.createObjectURL(compressed));
+    } catch (error) {
+      toast.error(t(imageErrorMessage(error)));
+    } finally {
+      setImageBusy(false);
+    }
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
+  const deleteImage = async () => {
+    if (selectedImage) {
+      clearSelectedImage();
+      return;
+    }
+    if (props.kind !== 'product' || !imagePath) return;
+    if (!window.confirm(t('catalog_image_confirm_remove'))) return;
+    const productId = props.record?.id ?? createdProductId;
+    if (!productId) return;
+    setImageBusy(true);
+    try {
+      await removeProductImage(productId, imagePath);
+      setImagePath(null);
+      toast.success(t('catalog_image_removed'));
+      props.onSaved();
+    } catch (error) {
+      toast.error(t(imageErrorMessage(error)));
+    } finally {
+      setImageBusy(false);
+    }
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -305,9 +366,11 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
           low_stock_limit_kg: numericValue(values.low_stock_limit_kg),
           is_active: values.is_active,
         };
-        if (props.record) await updateProduct(props.record.id, input);
+        const productId = props.record?.id ?? createdProductId;
+        if (productId) await updateProduct(productId, input);
         else {
           const id = await createProduct(input);
+          setCreatedProductId(id);
           if (numericValue(values.stock_kg) > 0) {
             try {
               await recordStockMovement({
@@ -374,6 +437,24 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
         if (currentVendor) await updateVendor(currentVendor.id, input);
         else await createVendor(input);
       }
+      if (props.kind === 'product' && selectedImage) {
+        const productId = props.record?.id ?? createdProductId;
+        if (productId) {
+          setImageBusy(true);
+          try {
+            const uploadedPath = await uploadProductImage(productId, selectedImage);
+            setImagePath(uploadedPath);
+            clearSelectedImage();
+          } catch (error) {
+            toast.error(`${t('catalog_image_upload_warning')} ${t(imageErrorMessage(error))}`);
+            props.onSaved();
+            setSaving(false);
+            return;
+          } finally {
+            setImageBusy(false);
+          }
+        }
+      }
       toast.success(t(editing ? 'catalog_saved' : 'catalog_created'));
       props.onSaved();
       props.onClose();
@@ -427,7 +508,7 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
       footer={
         <>
           <Button variant="ghost" onClick={props.onClose} disabled={saving}>{t('cancel')}</Button>
-          <Button type="submit" form="catalog-editor-form" loading={saving}>
+          <Button type="submit" form="catalog-editor-form" loading={saving} disabled={imageBusy}>
             {saving ? t('catalog_saving') : t('save')}
           </Button>
         </>
@@ -461,6 +542,44 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
                 maxLength={80}
               />
             )}
+            <section className="space-y-3 rounded-xl border border-stone-200 p-4">
+              <h3 className="font-semibold text-stone-800">{t('catalog_image')}</h3>
+              {(imagePreview || imagePath) && (
+                <img
+                  src={imagePreview ?? getProductImageUrl(imagePath ?? '')}
+                  alt={values.name || t('catalog_image')}
+                  width={640}
+                  height={480}
+                  className="aspect-[4/3] w-full rounded-lg object-cover"
+                />
+              )}
+              {!imagePreview && !imagePath && (
+                <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-stone-100 text-stone-500">
+                  <ImageIcon className="h-10 w-10" aria-hidden />
+                </div>
+              )}
+              {imageBusy && <p role="status" className="text-sm text-stone-600">{t('catalog_image_uploading')}</p>}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                className="sr-only"
+                onChange={(event) => void chooseImage(event)}
+                aria-label={t('catalog_image_choose')}
+              />
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" type="button" disabled={imageBusy || saving} onClick={() => imageInputRef.current?.click()}>
+                  <ImagePlus className="h-5 w-5" aria-hidden />
+                  {t('catalog_image_choose')}
+                </Button>
+                {(imagePath || selectedImage) && (
+                  <Button variant="ghost" type="button" disabled={imageBusy || saving} onClick={() => void deleteImage()}>
+                    {t('catalog_image_remove')}
+                  </Button>
+                )}
+              </div>
+            </section>
             <label className="block space-y-1.5 text-sm font-semibold text-stone-700">
               <span>{t('catalog_description')}</span>
               <textarea value={values.description} onChange={update('description')} maxLength={500} rows={3} className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base text-stone-900 focus:border-leaf-600 focus:outline-none focus:ring-4 focus:ring-leaf-100" />

@@ -1,8 +1,9 @@
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Feedback';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatINR, formatKg } from '@/lib/format';
+import { getProductImageUrl } from '@/services/imageService';
 import type { MessageKey } from '@/lib/i18n';
 import type { ProductRow, RawRow, Role, StockItemOption, VendorRow, VendorType } from '@/types';
 import { movementTypesFor, type StockDirection } from '@/lib/stock';
@@ -23,6 +24,7 @@ interface StockCardProps {
   code: string;
   name: string;
   detail?: string;
+  imagePath?: string | null;
   stockKg: number;
   lowStockLimitKg: number;
   prices?: PriceLine[];
@@ -35,7 +37,7 @@ interface StockCardProps {
   };
 }
 
-function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices, isActive, onEdit, stockActions }: StockCardProps) {
+function StockCard({ code, name, detail, imagePath, stockKg, lowStockLimitKg, prices, isActive, onEdit, stockActions }: StockCardProps) {
   const { t } = useLanguage();
   const isLow = stockKg <= lowStockLimitKg;
   const canStockIn = stockActions && movementTypesFor(stockActions.role, stockActions.item.item_type, 'in').length > 0;
@@ -43,6 +45,26 @@ function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices, isAct
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200 transition-shadow hover:shadow-md">
+      {imagePath !== undefined && (
+        imagePath ? (
+          <img
+            src={getProductImageUrl(imagePath)}
+            alt={name}
+            width={640}
+            height={480}
+            loading="lazy"
+            className="aspect-[4/3] w-full rounded-xl object-cover"
+          />
+        ) : (
+          <div
+            role="img"
+            aria-label={t('catalog_image_placeholder')}
+            className="flex aspect-[4/3] w-full items-center justify-center rounded-xl bg-stone-100 text-stone-400"
+          >
+            <ImageIcon className="h-10 w-10" aria-hidden />
+          </div>
+        )
+      )}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold tracking-wide text-leaf-800">{code}</p>
@@ -135,6 +157,7 @@ export function ProductSection({ rows, showPrices, canEdit, onEdit, role, onStoc
                 key={row.id}
                 code={row.sku}
                 name={row.name}
+                imagePath={row.image_path}
                 detail={row.description ?? `${row.pack_size} ${row.pack_unit}`}
                 stockKg={row.stock_kg}
                 lowStockLimitKg={row.low_stock_limit_kg}

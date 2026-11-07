@@ -22,6 +22,7 @@ const ACTION_LABELS: Record<string, MessageKey> = {
   product_updated: 'action_product_updated',
   product_deactivated: 'action_product_deactivated',
   product_reactivated: 'action_product_reactivated',
+  product_image_changed: 'action_product_image_changed',
   product_stock_changed: 'action_product_stock_changed',
   raw_material_created: 'action_raw_material_created',
   raw_material_updated: 'action_raw_material_updated',

@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/useToast';
 import { formatINR, formatKg } from '@/lib/format';
+import { getProductImageUrl } from '@/services/imageService';
 import { listCustomers } from '@/services/customerService';
 import { confirmOrder, getOrderItems, listOrderProducts, saveOrderDraft } from '@/services/orderService';
 import type { CustomerRow, OrderItemRow, OrderProductOption, OrderRow, Role } from '@/types';
@@ -258,10 +259,25 @@ export function OrderEditorModal({ role, order, initialCustomerId, onClose, onSa
                   <div key={line.key} className="space-y-3 rounded-xl border border-stone-200 p-4">
                     <div className="flex items-start gap-2">
                       <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
-                        <SelectField label={t('orders_product')} value={line.productId} onChange={(event) => changeLine(line.key, { productId: event.target.value })}>
-                          <option value="">{t('orders_select_product')}</option>
-                          {products.map((product) => <option key={product.id} value={product.id}>{product.sku} · {product.name}</option>)}
-                        </SelectField>
+                        <div className="space-y-2">
+                          <SelectField label={t('orders_product')} value={line.productId} onChange={(event) => changeLine(line.key, { productId: event.target.value })}>
+                            <option value="">{t('orders_select_product')}</option>
+                            {products.map((product) => <option key={product.id} value={product.id}>{product.sku} · {product.name}</option>)}
+                          </SelectField>
+                          {item?.product?.image_path && (
+                            <div className="flex items-center gap-3 rounded-lg bg-stone-50 p-2">
+                              <img
+                                src={getProductImageUrl(item.product.image_path)}
+                                alt={item.product.name}
+                                width={48}
+                                height={48}
+                                loading="lazy"
+                                className="h-12 w-12 rounded-lg object-cover"
+                              />
+                              <span className="font-semibold text-stone-800">{item.product.name}</span>
+                            </div>
+                          )}
+                        </div>
                         <SelectField label={t('orders_sale_type')} value={line.saleType} onChange={(event) => changeLine(line.key, { saleType: event.target.value as OrderLineForm['saleType'] })}>
                           <option value="retail">{t('orders_retail')}</option>
                           <option value="wholesale">{t('orders_wholesale')}</option>

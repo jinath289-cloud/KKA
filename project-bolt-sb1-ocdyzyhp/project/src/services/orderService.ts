@@ -146,7 +146,7 @@ export async function listOrderProducts(): Promise<OrderProductOption[]> {
   const [{ data: products, error: productError }, { data: stock, error: stockError }] = await Promise.all([
     supabase
       .from('products')
-      .select('id, sku, name, pack_size, pack_unit, retail_price, wholesale_price, is_active')
+      .select('id, sku, name, image_path, pack_size, pack_unit, retail_price, wholesale_price, is_active')
       .eq('is_active', true)
       .order('name'),
     supabase.rpc('list_product_stock'),
