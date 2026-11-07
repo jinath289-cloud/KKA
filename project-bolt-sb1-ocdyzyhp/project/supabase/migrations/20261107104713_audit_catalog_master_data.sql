@@ -42,7 +42,7 @@ BEGIN
   END IF;
 
   IF TG_TABLE_NAME = 'products' THEN
-    IF NEW.stock_kg IS DISTINCT FROM OLD.stock_kg THEN
+    IF NEW.stock_kg IS DISTINCT FROM OLD.stock_kg AND current_setting('app.stock_rpc', true) IS DISTINCT FROM 'on' THEN
       INSERT INTO audit_log (action, entity, entity_id, old_values, new_values, created_by)
       VALUES (
         'product_stock_changed',
@@ -74,7 +74,7 @@ BEGIN
       );
     END IF;
   ELSIF TG_TABLE_NAME = 'raw_materials' THEN
-    IF NEW.stock_kg IS DISTINCT FROM OLD.stock_kg THEN
+    IF NEW.stock_kg IS DISTINCT FROM OLD.stock_kg AND current_setting('app.stock_rpc', true) IS DISTINCT FROM 'on' THEN
       INSERT INTO audit_log (action, entity, entity_id, old_values, new_values, created_by)
       VALUES (
         'raw_material_stock_changed',

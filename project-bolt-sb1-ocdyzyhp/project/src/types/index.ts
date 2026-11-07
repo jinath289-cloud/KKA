@@ -53,6 +53,42 @@ export interface VendorRow {
   is_active: boolean;
 }
 
+export type StockItemType = 'product' | 'raw_material';
+export type StockMovementType =
+  | 'opening'
+  | 'purchase_in'
+  | 'production_in'
+  | 'production_out'
+  | 'sale_out'
+  | 'return_in'
+  | 'wastage'
+  | 'adjustment_in'
+  | 'adjustment_out';
+
+export interface StockItemOption {
+  id: string;
+  item_type: StockItemType;
+  code: string;
+  name: string;
+  stock_kg: number;
+  low_stock_limit_kg: number;
+  is_active: boolean;
+}
+
+export interface StockMovement {
+  id: string;
+  item_type: StockItemType;
+  item_id: string;
+  movement_type: StockMovementType;
+  quantity_kg: number;
+  note: string | null;
+  vendor_id: string | null;
+  balance_after_kg: number;
+  created_by: string | null;
+  created_at: string;
+  vendor?: { name: string } | { name: string }[] | null;
+}
+
 export interface AuditEntry {
   id: string;
   action: string;

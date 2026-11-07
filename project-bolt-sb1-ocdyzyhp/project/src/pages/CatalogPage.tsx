@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronDown, Package, Sprout, Store, type LucideIcon } from 'lucide-react';
 import { CatalogEditorModal } from '@/components/catalog/CatalogEditorModal';
+import { StockMovementModal } from '@/components/catalog/StockMovementModal';
 import { ProductSection, RawSection, VendorSection } from '@/components/catalog/CatalogSections';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ListSkeleton } from '@/components/ui/Feedback';
@@ -10,7 +11,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/cn';
 import { fetchProductRows, fetchRawRows } from '@/services/catalogService';
 import { fetchVendorRows } from '@/services/vendorService';
-import type { ProductRow, RawRow, Role, VendorRow } from '@/types';
+import type { ProductRow, RawRow, Role, StockItemOption, VendorRow } from '@/types';
+import type { StockDirection } from '@/lib/stock';
 
 type Tab = 'products' | 'raw' | 'vendors';
 type EditorKind = 'product' | 'raw' | 'vendor';
@@ -146,6 +148,7 @@ export function CatalogPage({ role }: CatalogPageProps) {
   const [category, setCategory] = useState('');
   const [showInactive, setShowInactive] = useState(false);
   const [editor, setEditor] = useState<EditorState>(null);
+  const [stockMovement, setStockMovement] = useState<{ item: StockItemOption; direction: StockDirection } | null>(null);
 
   const showPrices = role !== 'store';
   const showCost = role === 'admin' || role === 'purchase';
@@ -291,10 +294,24 @@ export function CatalogPage({ role }: CatalogPageProps) {
         />
       )}
       {!loading && !failed && tab === 'products' && !isEmpty && products && (
-        <ProductSection rows={visibleProducts} showPrices={showPrices} canEdit={canEditMasterData} onEdit={(record) => setEditor({ kind: 'product', record })} />
+        <ProductSection
+          rows={visibleProducts}
+          showPrices={showPrices}
+          canEdit={canEditMasterData}
+          onEdit={(record) => setEditor({ kind: 'product', record })}
+          role={role}
+          onStockMovement={(item, direction) => setStockMovement({ item, direction })}
+        />
       )}
       {!loading && !failed && tab === 'raw' && !isEmpty && raws && (
-        <RawSection rows={visibleRaws} showCost={showCost} canEdit={canEditMasterData} onEdit={(record) => setEditor({ kind: 'raw', record })} />
+        <RawSection
+          rows={visibleRaws}
+          showCost={showCost}
+          canEdit={canEditMasterData}
+          onEdit={(record) => setEditor({ kind: 'raw', record })}
+          role={role}
+          onStockMovement={(item, direction) => setStockMovement({ item, direction })}
+        />
       )}
       {!loading && !failed && tab === 'vendors' && !isEmpty && vendors && (
         <VendorSection rows={visibleVendors} canEdit={canEditVendors} onEdit={(record) => setEditor({ kind: 'vendor', record })} />
@@ -308,6 +325,15 @@ export function CatalogPage({ role }: CatalogPageProps) {
       )}
       {editor?.kind === 'vendor' && (
         <CatalogEditorModal key={`vendor-${editor.record?.id ?? 'new'}`} kind="vendor" record={editor.record} categories={categories} onClose={() => setEditor(null)} onSaved={refreshAfterSave} />
+      )}
+      {stockMovement && (
+        <StockMovementModal
+          item={stockMovement.item}
+          direction={stockMovement.direction}
+          role={role}
+          onClose={() => setStockMovement(null)}
+          onSaved={refreshAfterSave}
+        />
       )}
     </div>
   );

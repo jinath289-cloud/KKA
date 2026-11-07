@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/Feedback';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatINR, formatKg } from '@/lib/format';
 import type { MessageKey } from '@/lib/i18n';
-import type { ProductRow, RawRow, VendorRow, VendorType } from '@/types';
+import type { ProductRow, RawRow, Role, StockItemOption, VendorRow, VendorType } from '@/types';
+import { movementTypesFor, type StockDirection } from '@/lib/stock';
 
 const VENDOR_TYPE_LABELS: Record<VendorType, MessageKey> = {
   farmer: 'catalog_vendor_type_farmer',
@@ -27,11 +28,18 @@ interface StockCardProps {
   prices?: PriceLine[];
   isActive: boolean;
   onEdit?: () => void;
+  stockActions?: {
+    item: StockItemOption;
+    role: Role;
+    onMove: (item: StockItemOption, direction: StockDirection) => void;
+  };
 }
 
-function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices, isActive, onEdit }: StockCardProps) {
+function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices, isActive, onEdit, stockActions }: StockCardProps) {
   const { t } = useLanguage();
   const isLow = stockKg <= lowStockLimitKg;
+  const canStockIn = stockActions && movementTypesFor(stockActions.role, stockActions.item.item_type, 'in').length > 0;
+  const canStockOut = stockActions && movementTypesFor(stockActions.role, stockActions.item.item_type, 'out').length > 0;
 
   return (
     <article className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200 transition-shadow hover:shadow-md">
@@ -77,6 +85,20 @@ function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices, isAct
           {t('catalog_edit')}
         </Button>
       )}
+      {stockActions && (canStockIn || canStockOut) && (
+        <div className="grid grid-cols-2 gap-3">
+          {canStockIn ? (
+            <Button variant="secondary" onClick={() => stockActions.onMove(stockActions.item, 'in')}>
+              {t('stock_in_button')}
+            </Button>
+          ) : <span />}
+          {canStockOut ? (
+            <Button variant="outline" onClick={() => stockActions.onMove(stockActions.item, 'out')}>
+              {t('stock_out_button')}
+            </Button>
+          ) : <span />}
+        </div>
+      )}
     </article>
   );
 }
@@ -94,9 +116,11 @@ interface ProductSectionProps {
   showPrices: boolean;
   canEdit: boolean;
   onEdit: (row: ProductRow) => void;
+  role: Role;
+  onStockMovement: (item: StockItemOption, direction: StockDirection) => void;
 }
 
-export function ProductSection({ rows, showPrices, canEdit, onEdit }: ProductSectionProps) {
+export function ProductSection({ rows, showPrices, canEdit, onEdit, role, onStockMovement }: ProductSectionProps) {
   const { t } = useLanguage();
 
   return (
@@ -105,16 +129,30 @@ export function ProductSection({ rows, showPrices, canEdit, onEdit }: ProductSec
         <section key={category} className="space-y-4">
           <h2 className="text-base font-bold uppercase tracking-wide text-leaf-800">{category}</h2>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {items.map((row) => (
-              <StockCard
+            {items.map((row) => {
+              const isActive = row.is_active !== false;
+              return <StockCard
                 key={row.id}
                 code={row.sku}
                 name={row.name}
                 detail={row.description ?? `${row.pack_size} ${row.pack_unit}`}
                 stockKg={row.stock_kg}
                 lowStockLimitKg={row.low_stock_limit_kg}
-                isActive={row.is_active !== false}
+                isActive={isActive}
                 onEdit={canEdit ? () => onEdit(row) : undefined}
+                stockActions={!isActive ? undefined : {
+                  role,
+                  item: {
+                    id: row.id,
+                    item_type: 'product',
+                    code: row.sku,
+                    name: row.name,
+                    stock_kg: row.stock_kg,
+                    low_stock_limit_kg: row.low_stock_limit_kg,
+                    is_active: isActive,
+                  },
+                  onMove: onStockMovement,
+                }}
                 prices={
                   showPrices && row.retail_price !== undefined && row.wholesale_price !== undefined
                     ? [
@@ -126,8 +164,8 @@ export function ProductSection({ rows, showPrices, canEdit, onEdit }: ProductSec
                       ]
                     : undefined
                 }
-              />
-            ))}
+              />;
+            })}
           </div>
         </section>
       ))}
@@ -140,29 +178,45 @@ interface RawSectionProps {
   showCost: boolean;
   canEdit: boolean;
   onEdit: (row: RawRow) => void;
+  role: Role;
+  onStockMovement: (item: StockItemOption, direction: StockDirection) => void;
 }
 
-export function RawSection({ rows, showCost, canEdit, onEdit }: RawSectionProps) {
+export function RawSection({ rows, showCost, canEdit, onEdit, role, onStockMovement }: RawSectionProps) {
   const { t } = useLanguage();
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {rows.map((row) => (
-        <StockCard
+      {rows.map((row) => {
+        const isActive = row.is_active !== false;
+        return <StockCard
           key={row.id}
           code={row.code}
           name={row.name}
           stockKg={row.stock_kg}
           lowStockLimitKg={row.low_stock_limit_kg}
-          isActive={row.is_active !== false}
+          isActive={isActive}
           onEdit={canEdit ? () => onEdit(row) : undefined}
+          stockActions={!isActive ? undefined : {
+            role,
+            item: {
+              id: row.id,
+              item_type: 'raw_material',
+              code: row.code,
+              name: row.name,
+              stock_kg: row.stock_kg,
+              low_stock_limit_kg: row.low_stock_limit_kg,
+              is_active: isActive,
+            },
+            onMove: onStockMovement,
+          }}
           prices={
             showCost && row.cost_per_kg !== undefined
               ? [{ label: t('col_cost'), value: formatINR(row.cost_per_kg) }]
               : undefined
           }
-        />
-      ))}
+        />;
+      })}
     </div>
   );
 }

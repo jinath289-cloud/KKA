@@ -33,6 +33,7 @@ const ACTION_LABELS: Record<string, MessageKey> = {
   vendor_updated: 'action_vendor_updated',
   vendor_deactivated: 'action_vendor_deactivated',
   vendor_reactivated: 'action_vendor_reactivated',
+  stock_movement_recorded: 'action_stock_movement_recorded',
 };
 
 const ENTITY_LABELS: Record<string, MessageKey> = {
@@ -40,6 +41,7 @@ const ENTITY_LABELS: Record<string, MessageKey> = {
   product: 'audit_entity_product',
   raw_material: 'audit_entity_raw_material',
   vendor: 'audit_entity_vendor',
+  stock_movement: 'audit_entity_stock_movement',
 };
 
 function isRole(value: unknown): value is Role {

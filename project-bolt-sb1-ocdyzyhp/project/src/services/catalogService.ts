@@ -73,22 +73,45 @@ export async function fetchActiveRawMaterialNames(): Promise<string[]> {
   return (data ?? []).map((row) => row.name);
 }
 
-export async function createProduct(input: ProductInput): Promise<void> {
-  const { error } = await supabase.from('products').insert(input);
+export async function createProduct(input: ProductInput): Promise<string> {
+  const { data, error } = await supabase.from('products').insert({ ...input, stock_kg: 0 }).select('id').single();
   if (error) throw error;
+  return data.id;
 }
 
 export async function updateProduct(id: string, input: ProductInput): Promise<void> {
-  const { error } = await supabase.from('products').update(input).eq('id', id);
+  const { error } = await supabase.from('products').update({
+    sku: input.sku,
+    name: input.name,
+    category: input.category,
+    description: input.description,
+    pack_size: input.pack_size,
+    pack_unit: input.pack_unit,
+    retail_price: input.retail_price,
+    wholesale_price: input.wholesale_price,
+    low_stock_limit_kg: input.low_stock_limit_kg,
+    is_active: input.is_active,
+  }).eq('id', id);
   if (error) throw error;
 }
 
-export async function createRawMaterial(input: RawMaterialInput): Promise<void> {
-  const { error } = await supabase.from('raw_materials').insert({ ...input, unit: 'kg' });
+export async function createRawMaterial(input: RawMaterialInput): Promise<string> {
+  const { data, error } = await supabase
+    .from('raw_materials')
+    .insert({ ...input, unit: 'kg', stock_kg: 0 })
+    .select('id')
+    .single();
   if (error) throw error;
+  return data.id;
 }
 
 export async function updateRawMaterial(id: string, input: RawMaterialInput): Promise<void> {
-  const { error } = await supabase.from('raw_materials').update(input).eq('id', id);
+  const { error } = await supabase.from('raw_materials').update({
+    code: input.code,
+    name: input.name,
+    cost_per_kg: input.cost_per_kg,
+    low_stock_limit_kg: input.low_stock_limit_kg,
+    is_active: input.is_active,
+  }).eq('id', id);
   if (error) throw error;
 }

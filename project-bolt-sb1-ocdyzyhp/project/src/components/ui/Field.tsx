@@ -1,4 +1,10 @@
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
+import {
+  useId,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from 'react';
 import { cn } from '@/lib/cn';
 
 const CONTROL =
@@ -46,6 +52,28 @@ export function TextField({ label, error, hint, className, ...rest }: TextFieldP
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
         className={cn(CONTROL, className)}
+        {...rest}
+      />
+    </FieldWrapper>
+  );
+}
+
+interface TextAreaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  error?: string;
+  hint?: string;
+}
+
+export function TextAreaField({ label, error, hint, className, ...rest }: TextAreaFieldProps) {
+  const generatedId = useId();
+  const id = rest.id ?? generatedId;
+  return (
+    <FieldWrapper id={id} label={label} error={error} hint={hint}>
+      <textarea
+        id={id}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={cn(CONTROL, 'min-h-24', className)}
         {...rest}
       />
     </FieldWrapper>

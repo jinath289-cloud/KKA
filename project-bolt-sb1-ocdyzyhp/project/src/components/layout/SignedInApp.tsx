@@ -9,6 +9,7 @@ import { AuditPage } from '@/pages/AuditPage';
 import { CatalogPage } from '@/pages/CatalogPage';
 import { HomePage } from '@/pages/HomePage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { StockPage } from '@/pages/StockPage';
 import type { Profile } from '@/types';
 
 interface SignedInAppProps {
@@ -35,6 +36,7 @@ export function SignedInApp({ profile }: SignedInAppProps) {
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:pb-12 lg:pl-72 lg:pr-8">
         {page === 'home' && <HomePage profile={profile} onNavigate={setRequestedPage} />}
         {page === 'catalog' && <CatalogPage role={profile.role} />}
+        {page === 'stock' && <StockPage key={profile.role} role={profile.role} />}
         {page === 'settings' && <SettingsPage currentUserId={profile.id} />}
         {page === 'audit' && <AuditPage />}
       </main>

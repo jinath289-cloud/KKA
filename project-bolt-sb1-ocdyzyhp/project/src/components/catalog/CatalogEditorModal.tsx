@@ -5,6 +5,7 @@ import { SelectField, TextField } from '@/components/ui/Field';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/useToast';
 import type { MessageKey } from '@/lib/i18n';
+import { recordStockMovement } from '@/services/stockService';
 import {
   createProduct,
   createRawMaterial,
@@ -288,6 +289,7 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
     }
 
     setSaving(true);
+    let createdWithoutOpening = false;
     try {
       if (props.kind === 'product') {
         const input: ProductInput = {
@@ -304,7 +306,24 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
           is_active: values.is_active,
         };
         if (props.record) await updateProduct(props.record.id, input);
-        else await createProduct(input);
+        else {
+          const id = await createProduct(input);
+          if (numericValue(values.stock_kg) > 0) {
+            try {
+              await recordStockMovement({
+                item_type: 'product',
+                item_id: id,
+                movement_type: 'opening',
+                quantity_kg: numericValue(values.stock_kg),
+                note: null,
+                vendor_id: null,
+              });
+            } catch (error) {
+              createdWithoutOpening = true;
+              throw error;
+            }
+          }
+        }
       } else if (props.kind === 'raw') {
         const input: RawMaterialInput = {
           code: values.code.trim(),
@@ -315,7 +334,24 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
           is_active: values.is_active,
         };
         if (props.record) await updateRawMaterial(props.record.id, input);
-        else await createRawMaterial(input);
+        else {
+          const id = await createRawMaterial(input);
+          if (numericValue(values.stock_kg) > 0) {
+            try {
+              await recordStockMovement({
+                item_type: 'raw_material',
+                item_id: id,
+                movement_type: 'opening',
+                quantity_kg: numericValue(values.stock_kg),
+                note: null,
+                vendor_id: null,
+              });
+            } catch (error) {
+              createdWithoutOpening = true;
+              throw error;
+            }
+          }
+        }
       } else {
         const currentVendor = props.record;
         const input: VendorInput = {
@@ -342,6 +378,12 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
       props.onSaved();
       props.onClose();
     } catch (error) {
+      if (createdWithoutOpening) {
+        toast.error(t('stock_opening_failed_item_created'));
+        props.onSaved();
+        props.onClose();
+        return;
+      }
       const code = readErrorCode(error);
       if (code === '23505') {
         setFormError(
@@ -434,7 +476,7 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
               <TextField label={t('catalog_wholesale_price')} type="number" step="0.01" min="0" value={values.wholesale_price} onChange={update('wholesale_price')} error={errors.wholesale_price && t(errors.wholesale_price)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <TextField label={t('catalog_stock_kg')} type="number" step="0.001" min="0" value={values.stock_kg} onChange={update('stock_kg')} error={errors.stock_kg && t(errors.stock_kg)} />
+              <TextField label={t(editing ? 'stock_current' : 'catalog_opening_stock')} type="number" step="0.001" min="0" value={values.stock_kg} onChange={update('stock_kg')} error={errors.stock_kg && t(errors.stock_kg)} readOnly={editing} />
               <TextField label={t('catalog_low_stock')} type="number" step="0.001" min="0" value={values.low_stock_limit_kg} onChange={update('low_stock_limit_kg')} error={errors.low_stock_limit_kg && t(errors.low_stock_limit_kg)} />
             </div>
             {editing && renderActiveField()}
@@ -448,7 +490,7 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
             <p className="text-sm text-stone-600">{t('catalog_unit_kg')}</p>
             <TextField label={t('catalog_cost_per_kg')} type="number" step="0.01" min="0" value={values.cost_per_kg} onChange={update('cost_per_kg')} error={errors.cost_per_kg && t(errors.cost_per_kg)} />
             <div className="grid grid-cols-2 gap-3">
-              <TextField label={t('catalog_stock_kg')} type="number" step="0.001" min="0" value={values.stock_kg} onChange={update('stock_kg')} error={errors.stock_kg && t(errors.stock_kg)} />
+              <TextField label={t(editing ? 'stock_current' : 'catalog_opening_stock')} type="number" step="0.001" min="0" value={values.stock_kg} onChange={update('stock_kg')} error={errors.stock_kg && t(errors.stock_kg)} readOnly={editing} />
               <TextField label={t('catalog_low_stock')} type="number" step="0.001" min="0" value={values.low_stock_limit_kg} onChange={update('low_stock_limit_kg')} error={errors.low_stock_limit_kg && t(errors.low_stock_limit_kg)} />
             </div>
             {editing && renderActiveField()}

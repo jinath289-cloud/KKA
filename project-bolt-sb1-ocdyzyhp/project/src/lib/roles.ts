@@ -1,9 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
-import { Home, Package, ScrollText, Settings, Sprout, ShoppingBag, Receipt, Wallet } from 'lucide-react';
+import { Home, Package, ScrollText, Settings, Sprout, ShoppingBag, Receipt, Wallet, ArrowLeftRight } from 'lucide-react';
 import type { MessageKey } from '@/lib/i18n';
 import type { Role } from '@/types';
 
-export type PageKey = 'home' | 'catalog' | 'settings' | 'audit';
+export type PageKey = 'home' | 'catalog' | 'stock' | 'settings' | 'audit';
 
 export interface NavItem {
   key: PageKey;
@@ -20,15 +20,16 @@ export interface RoleModule {
 const ALL_NAV: Record<PageKey, NavItem> = {
   home: { key: 'home', icon: Home, label: 'nav_home' },
   catalog: { key: 'catalog', icon: Package, label: 'nav_catalog' },
+  stock: { key: 'stock', icon: ArrowLeftRight, label: 'nav_stock' },
   settings: { key: 'settings', icon: Settings, label: 'nav_settings' },
   audit: { key: 'audit', icon: ScrollText, label: 'nav_audit' },
 };
 
 const NAV_KEYS_BY_ROLE: Record<Role, PageKey[]> = {
-  admin: ['home', 'catalog', 'settings', 'audit'],
-  purchase: ['home', 'catalog'],
-  store: ['home', 'catalog'],
-  sales: ['home', 'catalog'],
+  admin: ['home', 'catalog', 'stock', 'settings', 'audit'],
+  purchase: ['home', 'catalog', 'stock'],
+  store: ['home', 'catalog', 'stock'],
+  sales: ['home', 'catalog', 'stock'],
 };
 
 export const ROLE_LABEL: Record<Role, MessageKey> = {
