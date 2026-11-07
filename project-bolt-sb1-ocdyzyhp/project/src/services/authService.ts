@@ -20,13 +20,3 @@ export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
   if (error) throw error;
   return data as Profile | null;
 }
-
-export async function fetchDemoLoginVisible(): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('settings')
-    .select('value')
-    .eq('key', 'show_demo_login')
-    .maybeSingle();
-  if (error) throw error;
-  return data?.value === true;
-}

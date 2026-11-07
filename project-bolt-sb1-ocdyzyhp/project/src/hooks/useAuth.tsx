@@ -35,7 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         setState({ status: 'signed-in', profile });
-      } catch {
+      } catch (error) {
+        console.error('Unable to load the signed-in user profile', error);
+        try {
+          const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+          if (signOutError) throw signOutError;
+        } catch (signOutError) {
+          console.error('Unable to clear the local auth session after profile loading failed', signOutError);
+        }
         setState({ status: 'signed-out', reason: 'load_failed' });
       }
     };

@@ -47,13 +47,6 @@ export async function setStaffActive(userId: string, active: boolean): Promise<v
   if (error) throw error;
 }
 
-export async function setDemoLoginVisible(visible: boolean): Promise<void> {
-  const { error } = await supabase
-    .from('settings')
-    .upsert({ key: 'show_demo_login', value: visible }, { onConflict: 'key' });
-  if (error) throw error;
-}
-
 export async function listAuditEntries(from: number, to: number): Promise<AuditEntry[]> {
   const { data, error } = await supabase
     .from('audit_log')

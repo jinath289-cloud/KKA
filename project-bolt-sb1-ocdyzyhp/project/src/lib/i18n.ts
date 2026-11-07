@@ -17,8 +17,6 @@ export const messages = {
   status_inactive: { en: 'Inactive', hi: 'निष्क्रिय' },
   error_generic: { en: 'Something went wrong. Please try again.', hi: 'कुछ गड़बड़ हुई। कृपया फिर से प्रयास करें।' },
   error_network: { en: 'Check your internet connection and try again.', hi: 'इंटरनेट कनेक्शन जांचें और फिर से प्रयास करें।' },
-  success_saved: { en: 'Saved successfully', hi: 'सफलतापूर्वक सहेजा गया' },
-
   sign_in_title: { en: 'Staff sign in', hi: 'स्टाफ लॉग इन' },
   sign_in_subtitle: { en: 'Sign in with the account given by the Admin.', hi: 'एडमिन द्वारा दिए गए खाते से लॉग इन करें।' },
   email: { en: 'Email', hi: 'ईमेल' },
@@ -33,10 +31,6 @@ export const messages = {
   err_inactive: { en: 'This account is inactive. Please contact the Admin.', hi: 'यह खाता निष्क्रिय है। कृपया एडमिन से संपर्क करें।' },
   err_email_exists: { en: 'An account with this email already exists', hi: 'इस ईमेल से खाता पहले से मौजूद है' },
   err_load_failed: { en: 'We could not load your profile. Please sign in again.', hi: 'आपकी प्रोफाइल लोड नहीं हो सकी। कृपया फिर से लॉग इन करें।' },
-
-  demo_login_title: { en: 'Demo Login', hi: 'डेमो लॉगिन' },
-  demo_login_note: { en: 'For testing only. Tap an account to fill the form.', hi: 'केवल परीक्षण के लिए। फॉर्म भरने के लिए कोई खाता चुनें।' },
-  use_account: { en: 'Use', hi: 'उपयोग करें' },
 
   role_admin: { en: 'Admin (Nath Ji)', hi: 'एडमिन (नाथ जी)' },
   role_purchase: { en: 'Purchase Manager', hi: 'खरीद प्रबंधक' },
@@ -75,16 +69,12 @@ export const messages = {
   module_finance_title: { en: 'Finance & reports', hi: 'वित्त और रिपोर्ट' },
   module_finance_desc: { en: 'Profit and loss, expenses, payables, receivables and exports.', hi: 'लाभ-हानि, खर्च, देनदारी, प्राप्य राशि और एक्सपोर्ट।' },
   quick_settings_title: { en: 'Staff & settings', hi: 'स्टाफ और सेटिंग्स' },
-  quick_settings_desc: { en: 'Create accounts, assign roles, and control the demo login box.', hi: 'खाते बनाएं, भूमिकाएं तय करें और डेमो लॉगिन बॉक्स नियंत्रित करें।' },
+  quick_settings_desc: { en: 'Create staff accounts and assign roles.', hi: 'स्टाफ खाते बनाएं और भूमिकाएं तय करें।' },
   quick_audit_title: { en: 'Audit log', hi: 'ऑडिट लॉग' },
   quick_audit_desc: { en: 'See who changed what, and when.', hi: 'देखें किसने क्या और कब बदला।' },
 
   settings_title: { en: 'Settings', hi: 'सेटिंग्स' },
   settings_subtitle: { en: 'Admin only. Manage staff accounts and app options.', hi: 'केवल एडमिन। स्टाफ खाते और ऐप विकल्प प्रबंधित करें।' },
-  demo_setting_title: { en: 'Demo Login box', hi: 'डेमो लॉगिन बॉक्स' },
-  demo_setting_desc: { en: 'Show the demo accounts on the sign-in page.', hi: 'साइन-इन पेज पर डेमो खाते दिखाएं।' },
-  demo_visible: { en: 'Shown', hi: 'दिख रहा है' },
-  demo_hidden: { en: 'Hidden', hi: 'छिपा हुआ है' },
   staff_title: { en: 'Staff accounts', hi: 'स्टाफ खाते' },
   staff_desc: { en: 'Create accounts, change roles, and activate or deactivate access.', hi: 'खाते बनाएं, भूमिका बदलें और पहुंच सक्रिय या निष्क्रिय करें।' },
   add_user: { en: 'Add staff', hi: 'स्टाफ जोड़ें' },

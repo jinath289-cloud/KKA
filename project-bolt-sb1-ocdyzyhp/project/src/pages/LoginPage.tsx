@@ -1,14 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { AppHeader } from '@/components/layout/AppHeader';
-import { DemoLoginBox } from '@/components/auth/DemoLoginBox';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/useToast';
 import type { SignedOutReason } from '@/hooks/useAuth';
 import type { MessageKey } from '@/lib/i18n';
-import { fetchDemoLoginVisible, signInWithPassword } from '@/services/authService';
+import { signInWithPassword } from '@/services/authService';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,13 +35,6 @@ export function LoginPage({ reason }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [demoVisible, setDemoVisible] = useState(false);
-
-  useEffect(() => {
-    fetchDemoLoginVisible()
-      .then(setDemoVisible)
-      .catch(() => setDemoVisible(false));
-  }, []);
 
   const validate = (): FormErrors => {
     const next: FormErrors = {};
@@ -64,12 +56,6 @@ export function LoginPage({ reason }: LoginPageProps) {
       toast.error(t(describeSignInError(error)));
       setSubmitting(false);
     }
-  };
-
-  const useDemoAccount = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setErrors({});
   };
 
   return (
@@ -123,7 +109,6 @@ export function LoginPage({ reason }: LoginPageProps) {
           </form>
         </section>
 
-        {demoVisible && <DemoLoginBox onUse={useDemoAccount} />}
       </main>
     </div>
   );
