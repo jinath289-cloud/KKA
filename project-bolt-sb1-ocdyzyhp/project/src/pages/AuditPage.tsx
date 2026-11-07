@@ -18,6 +18,28 @@ const ACTION_LABELS: Record<string, MessageKey> = {
   account_activated: 'action_account_activated',
   account_deactivated: 'action_account_deactivated',
   price_changed: 'action_price_changed',
+  product_created: 'action_product_created',
+  product_updated: 'action_product_updated',
+  product_deactivated: 'action_product_deactivated',
+  product_reactivated: 'action_product_reactivated',
+  product_stock_changed: 'action_product_stock_changed',
+  raw_material_created: 'action_raw_material_created',
+  raw_material_updated: 'action_raw_material_updated',
+  raw_material_deactivated: 'action_raw_material_deactivated',
+  raw_material_reactivated: 'action_raw_material_reactivated',
+  raw_material_stock_changed: 'action_raw_material_stock_changed',
+  raw_material_cost_changed: 'action_raw_material_cost_changed',
+  vendor_created: 'action_vendor_created',
+  vendor_updated: 'action_vendor_updated',
+  vendor_deactivated: 'action_vendor_deactivated',
+  vendor_reactivated: 'action_vendor_reactivated',
+};
+
+const ENTITY_LABELS: Record<string, MessageKey> = {
+  profile: 'audit_entity_profile',
+  product: 'audit_entity_product',
+  raw_material: 'audit_entity_raw_material',
+  vendor: 'audit_entity_vendor',
 };
 
 function isRole(value: unknown): value is Role {
@@ -98,7 +120,24 @@ export function AuditPage() {
                   </p>
                   <Badge tone="stone">{formatDateTime(entry.created_at, lang)}</Badge>
                 </div>
+                <p className="mt-2 text-sm text-stone-600">
+                  {t('audit_entity')}: {t(ENTITY_LABELS[entry.entity] ?? 'action_other')}
+                </p>
                 {detail && <p className="mt-2 text-base text-stone-700">{detail}</p>}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-sm font-semibold text-stone-600">{t('audit_old_values')}</p>
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-xl bg-stone-50 p-3 text-xs text-stone-700">
+                      {entry.old_values ? JSON.stringify(entry.old_values, null, 2) : '—'}
+                    </pre>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-stone-600">{t('audit_new_values')}</p>
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-xl bg-stone-50 p-3 text-xs text-stone-700">
+                      {entry.new_values ? JSON.stringify(entry.new_values, null, 2) : '—'}
+                    </pre>
+                  </div>
+                </div>
                 <p className="mt-2 text-sm text-stone-500">
                   {t('col_who')}: {entry.actor?.full_name ?? t('system_actor')}
                 </p>

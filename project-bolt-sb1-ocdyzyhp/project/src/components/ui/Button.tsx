@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -25,18 +25,22 @@ const VARIANTS: Record<Variant, string> = {
   ghost: 'text-leaf-800 hover:bg-leaf-50',
 };
 
-export function Button({
-  variant = 'primary',
-  fullWidth = false,
-  loading = false,
-  disabled,
-  className,
-  children,
-  type = 'button',
-  ...rest
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = 'primary',
+    fullWidth = false,
+    loading = false,
+    disabled,
+    className,
+    children,
+    type = 'button',
+    ...rest
+  },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       type={type}
       disabled={disabled || loading}
       className={cn(BASE, VARIANTS[variant], fullWidth && 'w-full', className)}
@@ -46,4 +50,4 @@ export function Button({
       {children}
     </button>
   );
-}
+});

@@ -1,8 +1,17 @@
 import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Feedback';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatINR, formatKg } from '@/lib/format';
-import type { ProductRow, RawRow } from '@/types';
+import type { MessageKey } from '@/lib/i18n';
+import type { ProductRow, RawRow, VendorRow, VendorType } from '@/types';
+
+const VENDOR_TYPE_LABELS: Record<VendorType, MessageKey> = {
+  farmer: 'catalog_vendor_type_farmer',
+  shg: 'catalog_vendor_type_shg',
+  local_producer: 'catalog_vendor_type_local_producer',
+  trader: 'catalog_vendor_type_trader',
+};
 
 interface PriceLine {
   label: string;
@@ -16,9 +25,11 @@ interface StockCardProps {
   stockKg: number;
   lowStockLimitKg: number;
   prices?: PriceLine[];
+  isActive: boolean;
+  onEdit?: () => void;
 }
 
-function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices }: StockCardProps) {
+function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices, isActive, onEdit }: StockCardProps) {
   const { t } = useLanguage();
   const isLow = stockKg <= lowStockLimitKg;
 
@@ -29,14 +40,17 @@ function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices }: Sto
           <p className="text-sm font-semibold tracking-wide text-leaf-800">{code}</p>
           <h3 className="mt-1 text-lg font-bold leading-snug text-stone-900">{name}</h3>
         </div>
-        {isLow ? (
-          <Badge tone="red">
-            <AlertTriangle className="mr-1 h-4 w-4" aria-hidden />
-            {t('low_stock')}
-          </Badge>
-        ) : (
-          <Badge tone="green">{t('in_stock')}</Badge>
-        )}
+        <div className="flex flex-wrap justify-end gap-2">
+          {!isActive && <Badge tone="red">{t('catalog_inactive')}</Badge>}
+          {isLow ? (
+            <Badge tone="amber">
+              <AlertTriangle className="mr-1 h-4 w-4" aria-hidden />
+              {t('low_stock')}
+            </Badge>
+          ) : (
+            <Badge tone="green">{t('in_stock')}</Badge>
+          )}
+        </div>
       </div>
 
       {detail && <p className="text-base text-stone-600">{detail}</p>}
@@ -58,6 +72,11 @@ function StockCard({ code, name, detail, stockKg, lowStockLimitKg, prices }: Sto
           {formatKg(stockKg)}
         </span>
       </div>
+      {onEdit && (
+        <Button variant="outline" onClick={onEdit} aria-label={`${t('catalog_edit')} ${name}`}>
+          {t('catalog_edit')}
+        </Button>
+      )}
     </article>
   );
 }
@@ -73,9 +92,11 @@ function groupByCategory(rows: ProductRow[]): [string, ProductRow[]][] {
 interface ProductSectionProps {
   rows: ProductRow[];
   showPrices: boolean;
+  canEdit: boolean;
+  onEdit: (row: ProductRow) => void;
 }
 
-export function ProductSection({ rows, showPrices }: ProductSectionProps) {
+export function ProductSection({ rows, showPrices, canEdit, onEdit }: ProductSectionProps) {
   const { t } = useLanguage();
 
   return (
@@ -92,6 +113,8 @@ export function ProductSection({ rows, showPrices }: ProductSectionProps) {
                 detail={row.description ?? `${row.pack_size} ${row.pack_unit}`}
                 stockKg={row.stock_kg}
                 lowStockLimitKg={row.low_stock_limit_kg}
+                isActive={row.is_active !== false}
+                onEdit={canEdit ? () => onEdit(row) : undefined}
                 prices={
                   showPrices && row.retail_price !== undefined && row.wholesale_price !== undefined
                     ? [
@@ -115,9 +138,11 @@ export function ProductSection({ rows, showPrices }: ProductSectionProps) {
 interface RawSectionProps {
   rows: RawRow[];
   showCost: boolean;
+  canEdit: boolean;
+  onEdit: (row: RawRow) => void;
 }
 
-export function RawSection({ rows, showCost }: RawSectionProps) {
+export function RawSection({ rows, showCost, canEdit, onEdit }: RawSectionProps) {
   const { t } = useLanguage();
 
   return (
@@ -129,12 +154,55 @@ export function RawSection({ rows, showCost }: RawSectionProps) {
           name={row.name}
           stockKg={row.stock_kg}
           lowStockLimitKg={row.low_stock_limit_kg}
+          isActive={row.is_active !== false}
+          onEdit={canEdit ? () => onEdit(row) : undefined}
           prices={
             showCost && row.cost_per_kg !== undefined
               ? [{ label: t('col_cost'), value: formatINR(row.cost_per_kg) }]
               : undefined
           }
         />
+      ))}
+    </div>
+  );
+}
+
+interface VendorSectionProps {
+  rows: VendorRow[];
+  canEdit: boolean;
+  onEdit: (row: VendorRow) => void;
+}
+
+export function VendorSection({ rows, canEdit, onEdit }: VendorSectionProps) {
+  const { t } = useLanguage();
+
+  return (
+    <div className="space-y-4">
+      {rows.map((vendor) => (
+        <article key={vendor.id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-bold text-stone-900">{vendor.name}</h3>
+                <Badge tone="amber">{t(VENDOR_TYPE_LABELS[vendor.vendor_type])}</Badge>
+                {vendor.is_id_verified && <Badge tone="green">{t('catalog_verified')}</Badge>}
+                {!vendor.is_active && <Badge tone="red">{t('catalog_inactive')}</Badge>}
+              </div>
+              <p className="text-base text-stone-700">{vendor.contact_person} · {vendor.phone}</p>
+              <p className="text-sm text-stone-600">{vendor.village_cluster}</p>
+              {vendor.address && <p className="text-sm text-stone-600">{vendor.address}</p>}
+              {vendor.upi_id && <p className="text-sm text-stone-600">{t('catalog_upi')}: {vendor.upi_id}</p>}
+              <p className="text-sm text-stone-600">
+                {t('catalog_supplies')}: {vendor.supplies.length > 0 ? vendor.supplies.join(', ') : t('catalog_none')}
+              </p>
+            </div>
+            {canEdit && (
+              <Button variant="outline" onClick={() => onEdit(vendor)} aria-label={`${t('catalog_edit')} ${vendor.name}`}>
+                {t('catalog_edit')}
+              </Button>
+            )}
+          </div>
+        </article>
       ))}
     </div>
   );

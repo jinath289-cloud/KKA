@@ -23,6 +23,7 @@ export interface ProductRow {
   description?: string | null;
   retail_price?: number;
   wholesale_price?: number;
+  is_active?: boolean;
 }
 
 export interface RawRow {
@@ -32,6 +33,24 @@ export interface RawRow {
   stock_kg: number;
   low_stock_limit_kg: number;
   cost_per_kg?: number;
+  is_active?: boolean;
+}
+
+export type VendorType = 'farmer' | 'shg' | 'local_producer' | 'trader';
+
+export interface VendorRow {
+  id: string;
+  name: string;
+  vendor_type: VendorType;
+  contact_person: string;
+  phone: string;
+  village_cluster: string;
+  address: string | null;
+  upi_id: string | null;
+  supplies: string[];
+  is_id_verified: boolean;
+  id_verified_at: string | null;
+  is_active: boolean;
 }
 
 export interface AuditEntry {
