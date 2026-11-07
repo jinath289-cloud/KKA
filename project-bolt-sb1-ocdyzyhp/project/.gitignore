@@ -6,3 +6,5 @@ dist
 .vscode/*
 
 supabase/.temp
+
+supabase/.temp
