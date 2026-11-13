@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Banknote, Ban, FileText, Pencil, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TextField } from '@/components/ui/Field';
@@ -55,6 +55,11 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
   const [reasonTarget, setReasonTarget] = useState<{ kind: 'cancel' } | { kind: 'void'; payment: PaymentRow } | null>(null);
   const [working, setWorking] = useState(false);
   const balance = Math.max(0, order.total - order.paid_amount);
+  // Keep the latest onChanged in a ref so reload() stays stable (prevents an endless reload loop).
+  const onChangedRef = useRef(onChanged);
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  });
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -70,13 +75,13 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
       setItems(freshItems);
       setPayments(freshPayments);
       setOnline(freshOnline);
-      onChanged(freshOrder);
+      onChangedRef.current(freshOrder);
     } catch {
       setFailed(true);
     } finally {
       setLoading(false);
     }
-  }, [initialOrder.id, onChanged]);
+  }, [initialOrder.id]);
 
   useEffect(() => {
     void reload();
