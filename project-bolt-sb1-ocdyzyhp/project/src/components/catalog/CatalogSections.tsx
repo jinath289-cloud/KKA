@@ -83,7 +83,7 @@ function StockCard({ code, name, detail, imagePath, stockKg, lowStockLimitKg, pr
         </div>
       </div>
 
-      {detail && <p className="text-base text-stone-600">{detail}</p>}
+      {detail && <p className="line-clamp-3 text-base text-stone-600">{detail.split(/\n\s*\n/)[0]}</p>}
 
       {prices && prices.length > 0 && (
         <dl className="grid grid-cols-2 gap-3">
