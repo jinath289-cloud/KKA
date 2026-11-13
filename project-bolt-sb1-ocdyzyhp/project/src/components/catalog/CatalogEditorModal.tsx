@@ -627,7 +627,7 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
             </section>
             <label className="block space-y-1.5 text-sm font-semibold text-stone-700">
               <span>{t('catalog_description')}</span>
-              <textarea value={values.description} onChange={update('description')} maxLength={500} rows={3} className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base text-stone-900 focus:border-leaf-600 focus:outline-none focus:ring-4 focus:ring-leaf-100" />
+              <textarea value={values.description} onChange={update('description')} maxLength={2000} rows={10} className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base text-stone-900 focus:border-leaf-600 focus:outline-none focus:ring-4 focus:ring-leaf-100" />
             </label>
             <div className="grid grid-cols-2 gap-3">
               <TextField label={t('catalog_pack_size')} type="number" step="0.01" min="0.01" value={values.pack_size} onChange={update('pack_size')} error={errors.pack_size && t(errors.pack_size)} />
