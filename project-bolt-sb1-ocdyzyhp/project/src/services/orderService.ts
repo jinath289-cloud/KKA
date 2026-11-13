@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type {
+  OnlineFulfilmentStatus,
+  OnlineOrderDetails,
   OrderItemRow,
   OrderProductOption,
   OrderRow,
@@ -210,4 +212,25 @@ export async function voidOrderPayment(id: string, reason: string): Promise<Paym
   const { data, error } = await supabase.rpc('void_payment', { p_payment_id: id, p_reason: reason });
   if (error) throw error;
   return data as PaymentRow;
+}
+
+export async function getOnlineOrderDetails(orderId: string): Promise<OnlineOrderDetails | null> {
+  const { data, error } = await supabase
+    .from('online_order_details')
+    .select('order_id, customer_name, customer_phone, customer_email, shipping_address, city, state, pincode, delivery_charge, payment_method, utr_number, screenshot_path, fulfilment_status')
+    .eq('order_id', orderId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as OnlineOrderDetails | null) ?? null;
+}
+
+export async function getPaymentScreenshotUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from('payment-screenshots').createSignedUrl(path, 300);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function setOnlineFulfilmentStatus(orderId: string, status: OnlineFulfilmentStatus): Promise<void> {
+  const { error } = await supabase.rpc('set_online_fulfilment_status', { p_order_id: orderId, p_status: status });
+  if (error) throw error;
 }

@@ -144,6 +144,24 @@ export interface OrderRow {
   customer?: Pick<CustomerRow, 'id' | 'name' | 'phone' | 'city_village' | 'address' | 'gstin'> | null;
 }
 
+export type OnlineFulfilmentStatus = 'received' | 'packed' | 'shipped' | 'delivered';
+
+export interface OnlineOrderDetails {
+  order_id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  shipping_address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  delivery_charge: number;
+  payment_method: 'UPI' | 'COD';
+  utr_number: string | null;
+  screenshot_path: string | null;
+  fulfilment_status: OnlineFulfilmentStatus;
+}
+
 export interface OrderItemRow {
   id: string;
   order_id: string;

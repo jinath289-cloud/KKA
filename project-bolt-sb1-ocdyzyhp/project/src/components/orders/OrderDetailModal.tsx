@@ -7,8 +7,8 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/useToast';
 import { formatINR } from '@/lib/format';
 import { BUSINESS } from '@/lib/business';
-import { cancelOrder, confirmOrder, getOrder, getOrderItems, getOrderPayments, recordOrderPayment, voidOrderPayment } from '@/services/orderService';
-import type { OrderItemRow, OrderRow, PaymentMethod, PaymentRow, Role } from '@/types';
+import { cancelOrder, confirmOrder, getOnlineOrderDetails, getOrder, getOrderItems, getOrderPayments, getPaymentScreenshotUrl, recordOrderPayment, setOnlineFulfilmentStatus, voidOrderPayment } from '@/services/orderService';
+import type { OnlineFulfilmentStatus, OnlineOrderDetails, OrderItemRow, OrderRow, PaymentMethod, PaymentRow, Role } from '@/types';
 import type { MessageKey } from '@/lib/i18n';
 
 interface OrderDetailModalProps {
@@ -47,6 +47,7 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
   const [order, setOrder] = useState(initialOrder);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [online, setOnline] = useState<OnlineOrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -59,14 +60,16 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
     setLoading(true);
     setFailed(false);
     try {
-      const [freshOrder, freshItems, freshPayments] = await Promise.all([
+      const [freshOrder, freshItems, freshPayments, freshOnline] = await Promise.all([
         getOrder(initialOrder.id),
         getOrderItems(initialOrder.id),
         getOrderPayments(initialOrder.id),
+        getOnlineOrderDetails(initialOrder.id).catch(() => null),
       ]);
       setOrder(freshOrder);
       setItems(freshItems);
       setPayments(freshPayments);
+      setOnline(freshOnline);
       onChanged(freshOrder);
     } catch {
       setFailed(true);
@@ -107,6 +110,31 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
       showActionError(error);
     } finally {
       setWorking(false);
+    }
+  };
+
+  const changeFulfilment = async (status: OnlineFulfilmentStatus) => {
+    setWorking(true);
+    try {
+      await setOnlineFulfilmentStatus(order.id, status);
+      toast.success(t('online_status_saved'));
+      await reload();
+    } catch (error) {
+      showActionError(error);
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const openScreenshot = async (path: string) => {
+    const popup = window.open('', '_blank');
+    try {
+      const url = await getPaymentScreenshotUrl(path);
+      if (popup) popup.location.href = url;
+      else window.location.href = url;
+    } catch {
+      popup?.close();
+      toast.error(t('online_screenshot_error'));
     }
   };
 
@@ -204,6 +232,17 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
               </div>
             )}
 
+            {online && (
+              <OnlineOrderPanel
+                details={online}
+                orderTotal={order.total}
+                canUpdateStatus={order.status === 'confirmed'}
+                working={working}
+                onStatusChange={(status) => void changeFulfilment(status)}
+                onOpenScreenshot={(path) => void openScreenshot(path)}
+              />
+            )}
+
             <div>
               <h3 className="mb-3 text-lg font-bold">{t('orders_items')}</h3>
               <div className="space-y-3 md:hidden">
@@ -274,6 +313,57 @@ export function OrderDetailModal({ order: initialOrder, role, onClose, onEdit, o
         />
       )}
     </>
+  );
+}
+
+const FULFILMENT_KEYS: Record<OnlineFulfilmentStatus, MessageKey> = {
+  received: 'online_status_received',
+  packed: 'online_status_packed',
+  shipped: 'online_status_shipped',
+  delivered: 'online_status_delivered',
+};
+
+function OnlineOrderPanel({
+  details,
+  orderTotal,
+  canUpdateStatus,
+  working,
+  onStatusChange,
+  onOpenScreenshot,
+}: {
+  details: OnlineOrderDetails;
+  orderTotal: number;
+  canUpdateStatus: boolean;
+  working: boolean;
+  onStatusChange: (status: OnlineFulfilmentStatus) => void;
+  onOpenScreenshot: (path: string) => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <section className="space-y-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
+      <h3 className="text-lg font-bold">{t('online_title')}</h3>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <p><strong>{t('orders_customer')}:</strong> {details.customer_name}</p>
+        <p><strong>{t('online_phone')}:</strong> {details.customer_phone}</p>
+        <p className="sm:col-span-2"><strong>{t('online_address')}:</strong> {details.shipping_address}, {details.city}, {details.state} - {details.pincode}</p>
+        <p><strong>{t('online_payment')}:</strong> {details.payment_method}</p>
+        {details.utr_number && <p><strong>{t('online_utr')}:</strong> {details.utr_number}</p>}
+        <p><strong>{t('online_delivery')}:</strong> {formatINR(details.delivery_charge)}</p>
+        <p><strong>{t('online_collect')}:</strong> {formatINR(orderTotal + details.delivery_charge)}</p>
+      </div>
+      {details.payment_method === 'UPI' && (
+        details.screenshot_path
+          ? <Button variant="outline" onClick={() => onOpenScreenshot(details.screenshot_path as string)}>{t('online_screenshot_view')}</Button>
+          : <p className="text-stone-600">{t('online_screenshot_none')}</p>
+      )}
+      {canUpdateStatus ? (
+        <SelectField label={t('online_fulfilment')} value={details.fulfilment_status} disabled={working} onChange={(event) => onStatusChange(event.target.value as OnlineFulfilmentStatus)}>
+          {(['received', 'packed', 'shipped', 'delivered'] as const).map((value) => <option key={value} value={value}>{t(FULFILMENT_KEYS[value])}</option>)}
+        </SelectField>
+      ) : (
+        <p className="text-stone-600">{t('online_confirm_first')}</p>
+      )}
+    </section>
   );
 }
 
