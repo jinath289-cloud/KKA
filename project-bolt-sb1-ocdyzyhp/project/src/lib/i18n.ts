@@ -69,6 +69,8 @@ export const messages = {
   catalog_filter_category: { en: 'Filter by category', hi: 'श्रेणी के अनुसार छांटें' },
   catalog_all_categories: { en: 'All categories', hi: 'सभी श्रेणियां' },
   catalog_select_category: { en: 'Select a category', hi: 'श्रेणी चुनें' },
+  catalog_quick_add: { en: 'Quick add: choose from Uttarakhand product list', hi: 'जल्दी जोड़ें: उत्तराखंड उत्पाद सूची से चुनें' },
+  catalog_quick_add_placeholder: { en: 'Select a product (or type below)', hi: 'उत्पाद चुनें (या नीचे खुद लिखें)' },
   catalog_new_category: { en: 'New category', hi: 'नई श्रेणी' },
   catalog_description: { en: 'Description', hi: 'विवरण' },
   catalog_image: { en: 'Product image', hi: 'उत्पाद की तस्वीर' },

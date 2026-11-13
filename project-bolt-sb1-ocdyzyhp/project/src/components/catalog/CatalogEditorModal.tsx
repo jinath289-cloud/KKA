@@ -19,6 +19,7 @@ import {
   type RawMaterialInput,
 } from '@/services/catalogService';
 import { createVendor, updateVendor, type VendorInput } from '@/services/vendorService';
+import { PRODUCT_TEMPLATES } from '@/lib/productTemplates';
 import type { ProductRow, RawRow, VendorRow, VendorType } from '@/types';
 
 type CatalogKind = 'product' | 'raw' | 'vendor';
@@ -256,6 +257,8 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [rawNames, setRawNames] = useState<string[]>([]);
   const [rawNamesFailed, setRawNamesFailed] = useState(false);
+  const [templateCode, setTemplateCode] = useState('');
+  const autoSkuBase = useRef<string | null>(null);
 
   const editing = props.record !== undefined || createdProductId !== null;
   const category = values.category === NEW_CATEGORY ? newCategory : values.category;
@@ -281,8 +284,38 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
 
   const update = (field: FormField) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = field === 'sku' ? event.target.value.toUpperCase() : event.target.value;
+    if (field === 'sku') autoSkuBase.current = null;
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
+    setFormError(null);
+  };
+
+  // Keep the auto-generated SKU in step with the pack size, e.g. TOMATO-POWDER-250G.
+  useEffect(() => {
+    const base = autoSkuBase.current;
+    if (!base) return;
+    const size = Number(values.pack_size);
+    const pack = Number.isFinite(size) && size > 0 ? `-${String(size)}${values.pack_unit.toUpperCase()}` : '';
+    setValues((current) => ({ ...current, sku: `${base}${pack}` }));
+  }, [values.pack_size, values.pack_unit]);
+
+  const applyTemplate = (code: string) => {
+    setTemplateCode(code);
+    const template = PRODUCT_TEMPLATES.find((item) => item.code === code);
+    if (!template || props.kind !== 'product') return;
+    const known = props.categories.includes(template.category);
+    autoSkuBase.current = template.code;
+    const size = Number(values.pack_size);
+    const pack = Number.isFinite(size) && size > 0 ? `-${String(size)}${values.pack_unit.toUpperCase()}` : '';
+    setValues((current) => ({
+      ...current,
+      name: template.name,
+      description: template.description,
+      category: known ? template.category : NEW_CATEGORY,
+      sku: `${template.code}${pack}`,
+    }));
+    setNewCategory(known ? '' : template.category);
+    setErrors({});
     setFormError(null);
   };
 
@@ -519,6 +552,18 @@ export function CatalogEditorModal(props: CatalogEditorProps) {
 
         {props.kind === 'product' && (
           <>
+            {!editing && (
+              <SelectField label={t('catalog_quick_add')} value={templateCode} onChange={(event) => applyTemplate(event.target.value)}>
+                <option value="">{t('catalog_quick_add_placeholder')}</option>
+                {[...new Set(PRODUCT_TEMPLATES.map((item) => item.category))].map((group) => (
+                  <optgroup key={group} label={group}>
+                    {PRODUCT_TEMPLATES.filter((item) => item.category === group).map((item) => (
+                      <option key={item.code} value={item.code}>{item.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </SelectField>
+            )}
             <TextField label={t('catalog_sku')} value={values.sku} onChange={update('sku')} error={errors.sku && t(errors.sku)} readOnly={editing} maxLength={40} />
             <TextField label={t('catalog_name')} value={values.name} onChange={update('name')} error={errors.name && t(errors.name)} maxLength={120} />
             <SelectField
